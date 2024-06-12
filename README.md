@@ -163,8 +163,90 @@ udev            247945     421  247524    1% /dev
  => CANCELED [documentation internal] load metadata for docker.io/library/alpine:3.12                                                                   0.2s
 failed to solve: failed to read dockerfile: open Dockerfile: no such file or directory
  ```
+### 12.06.2024
 
- В чем причина сбоя? Что делать?
+*Вопросы:*
+1. Нужно ли создавать перед запуском папки для вольюмов на ВМ? Или они сами создадуться?
+2. Зачем нужнен параметр Z (в докер компосе для вольюмов)? 
+
+Перед запуском докер компоса прописал переменные
+
+
+```
+root@tick:~/sandbox# export TELEGRAF_TAG=latest
+export INFLUXDB_TAG=1.8
+export CHRONOGRAF_TAG=latest
+export KAPACITOR_TAG=latest
+export TYPE=latest
+root@tick:~/sandbox# echo "$CHRONOGRAF_TAG"
+latest
+```
+Запустил:
+
+
+```
+root@tick:~/sandbox# docker compose up -d
+```
+
+
+Есть ошибка:
+```
+ ! chronograf Warning pull access denied for chrono_config, repository does not exist
+```
+Этот образ указан в коде докер компоса для хронографа:
+
+```
+    image: "chrono_config"
+```
+Более полный код:
+
+```
+  chronograf:
+    # Full tag list: https://hub.docker.com/r/library/chronograf/tags/
+    build:
+      context: ./images/chronograf
+      dockerfile: ./${TYPE}/Dockerfile
+      args:
+        CHRONOGRAF_TAG: ${CHRONOGRAF_TAG}
+    image: "chrono_config"
+    environment:
+      RESOURCES_PATH: "/usr/share/chronograf/resources"
+    volumes:
+      # Mount for chronograf database
+      - ./chronograf/data/:/var/lib/chronograf/
+```
+
+Вопрос:
+Зачем вообще тут используется image, если выше мы сами билдим имадж из докер файла? Видимо так хотим сохранить полученный имадж локально с таким именем?
+
+
+Не все контейнеры запустились:
+
+![alt text](image-5.png)
+
+Не запустились контеейнеры из образов:
+chrono_config 
+kapacitor
+
+смотрю логи:
+
+для хроно-конфига:
+```
+root@tick:~/sandbox# docker logs d2e664b51c8a
+time="2024-06-12T07:33:10Z" level=error msg="Unable to create bolt clientUnable to open boltdb; is there a chronograf already running?  open /var/lib/chronograf/chronograf-v1.db: permission denied"
+```
+
+логи kapacitor:
+
+```
+ts=2024-06-12T07:33:04.741Z lvl=error msg="encountered error" service=run err="create server: failed to save cluster ID: open /var/lib/kapacitor/cluster.id: permission denied"
+run: create server: failed to save cluster ID: open /var/lib/kapacitor/cluster.id: permission denied
+```
+
+Что же пошло не так?
+
+----
+
 
 В виде решения на это упражнение приведите скриншот веб-интерфейса ПО chronograf (`http://localhost:8888`). 
 
