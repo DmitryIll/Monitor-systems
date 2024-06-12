@@ -166,11 +166,10 @@ failed to solve: failed to read dockerfile: open Dockerfile: no such file or dir
 ### 12.06.2024
 
 *Вопросы:*
-1. Нужно ли создавать перед запуском папки для вольюмов на ВМ? Или они сами создадуться?
-2. Зачем нужнен параметр Z (в докер компосе для вольюмов)? 
+- Зачем нужнен параметр Z (в докер компосе для вольюмов) ? Я так понял Z - означает, что вольюм будет только для этого контейнера. Но, зачем это нужно?
+Пробовал и с этим параметром, но, все равно ошибки - см. далее.
 
-Перед запуском докер компоса прописал переменные
-
+Перед запуском докер компоса прописал переменные:
 
 ```
 root@tick:~/sandbox# export TELEGRAF_TAG=latest
@@ -216,7 +215,7 @@ root@tick:~/sandbox# docker compose up -d
       - ./chronograf/data/:/var/lib/chronograf/
 ```
 
-Вопрос:
+*Вопрос:*
 Зачем вообще тут используется image, если выше мы сами билдим имадж из докер файла? Видимо так хотим сохранить полученный имадж локально с таким именем?
 
 
@@ -244,6 +243,29 @@ run: create server: failed to save cluster ID: open /var/lib/kapacitor/cluster.i
 ```
 
 Что же пошло не так?
+
+Пробовал добавить Z для вольюмов (не помогло):
+
+```
+      - ./kapacitor/data/:/var/lib/kapacitor:Z
+```
+и:
+```
+      - ./chronograf/data/:/var/lib/chronograf/:Z
+```
+Но, ошибки все равно остаются, и контейнеры останавливаются:
+
+```
+time="2024-06-12T08:07:46Z" level=error msg="Unable to create bolt clientUnable to open boltdb; is there a chronograf already running?  open /var/lib/chronograf/chronograf-v1.db: permission denied"
+```
+и
+
+```
+ts=2024-06-12T08:08:06.581Z lvl=error msg="encountered error" service=run err="create server: failed to save cluster ID: open /var/lib/kapacitor/cluster.id: permission denied"
+run: create server: failed to save cluster ID: open /var/lib/kapacitor/cluster.id: permission denied
+```
+
+Как исправить?
 
 ----
 
