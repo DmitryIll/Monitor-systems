@@ -167,7 +167,6 @@ failed to solve: failed to read dockerfile: open Dockerfile: no such file or dir
 
 *Вопросы:*
 - Зачем нужнен параметр Z (в докер компосе для вольюмов) ? Я так понял Z - означает, что вольюм будет только для этого контейнера. Но, зачем это нужно?
-Пробовал и с этим параметром, но, все равно ошибки - см. далее.
 
 Перед запуском докер компоса прописал переменные:
 
@@ -242,7 +241,7 @@ ts=2024-06-12T07:33:04.741Z lvl=error msg="encountered error" service=run err="c
 run: create server: failed to save cluster ID: open /var/lib/kapacitor/cluster.id: permission denied
 ```
 
-Что же пошло не так?
+Видимо не хватает прав на папки.
 
 Пробовал добавить Z для вольюмов (не помогло):
 
@@ -328,7 +327,33 @@ https://github.com/influxdata/sandbox/issues/76
 ```
 What version of influxdb are you using? The sandbox is not working with influxdb of version greater or equal 2.
 ```
-Поставил версию 1.8 контейнеры стали работать:
+Поставил версию 1.8:
+
+```
+  influxdb:
+    # Full tag list: https://hub.docker.com/r/library/influxdb/tags/
+    build:
+      context: ./images/influxdb/
+      dockerfile: ./${TYPE}/Dockerfile
+      args:
+        INFLUXDB_TAG: ${INFLUXDB_TAG}
+    image: "influxdb:1.8"
+    volumes:
+      # Mount for influxdb data directory
+      - ./influxdb/data:/var/lib/influxdb
+      # Mount for influxdb configuration
+      - ./influxdb/config/:/etc/influxdb/
+    ports:
+      # The API for InfluxDB is served on port 8086
+      - "8086:8086"
+      - "8082:8082"
+      # UDP Port
+      - "8089:8089/udp"
+```
+
+При этом переменная тегом для influx не играла роли, получается.
+
+Контейнеры стали работать:
 
 ![alt text](image-7.png)
 
@@ -338,6 +363,8 @@ What version of influxdb are you using? The sandbox is not working with influxdb
 
 P.S.: если при запуске некоторые контейнеры будут падать с ошибкой - проставьте им режим `Z`, например
 `./data:/var/lib:Z`
+- Не потребовалось.
+
 #
 8. Перейдите в веб-интерфейс Chronograf (http://localhost:8888) и откройте вкладку Data explorer.
         
