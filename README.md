@@ -274,18 +274,54 @@ run: create server: failed to save cluster ID: open /var/lib/kapacitor/cluster.i
 ```
  chmod 777 -R /gitdata
 ```
+и на подпапки тоже сделал права 777.
+Ошибки с доступом к папке ушли.
 
-Что бы не было бы ограничений по правам.
-Только тут уже не добавлял Z для вольюмов.
+Но, есть ошибка у kapacitor:
 
-Но, не помогло все-равно те же ошибки.
+```
+2024/06/12 22:22:01 Using configuration at: /etc/kapacitor/kapacitor.conf
+ts=2024-06-12T22:22:01.305Z lvl=info msg="kapacitor starting" service=run version=1.7.4 branch=HEAD commit=3470f6ae7f53acaca90459cc1128298548fdc740
+ts=2024-06-12T22:22:01.305Z lvl=info msg="go version" service=run version=go1.21.9
+ts=2024-06-12T22:22:01.346Z lvl=info msg="listing Kapacitor hostname" source=srv hostname=693940aa96b2
+ts=2024-06-12T22:22:01.347Z lvl=info msg="listing ClusterID and ServerID" source=srv cluster_id=3ff2eec2-1b09-4493-a5d3-f804055fceb9 server_id=b2098471-8ca6-4478-b340-2aa1f229c61b
+ts=2024-06-12T22:22:01.347Z lvl=info msg="opened task master" service=kapacitor task_master=main
+ts=2024-06-12T22:22:01.354Z lvl=info msg="closed HTTP service" service=http
+ts=2024-06-12T22:22:01.354Z lvl=info msg="closed HTTP service" service=http
+ts=2024-06-12T22:22:01.354Z lvl=info msg="closed task master" service=kapacitor task_master=main
+ts=2024-06-12T22:22:01.354Z lvl=error msg="encountered error" service=run err="open server: open service *influxdb.Service: failed to link subscription on startup: invalid response: code 401"
+run: open server: open service *influxdb.Service: failed to link subscription on startup: invalid response: code 401
+```
+при этом сервис - контейнер influxdb запущен.
 
-Еще попробовал: для всех вольюмов постаил малую букву z.
+![alt text](image-6.png)
 
-запустил, но опять валятся контейнеры.
+На всякий случай вот логи influxdb
 
+```
+root@tick:/gitdata/tick-monitoring# docker logs 76cdda0a77b7
+2024-06-12T22:10:21.102852827Z  warn    boltdb not found at configured path, but DOCKER_INFLUXDB_INIT_MODE not specified, skipping setup wrapper        {"system": "docker", "bolt_path": "/va
+2024-06-12T22:10:21.483364533Z  warn    boltdb not found at configured path, but DOCKER_INFLUXDB_INIT_MODE not specified, skipping setup wrapper        {"system": "docker", "bolt_path": "/va
+ts=2024-06-12T22:10:21.795772Z lvl=info msg="Welcome to InfluxDB" log_id=0pkcsctl000 version=v2.7.6 commit=3c58c06206 build_date=2024-04-12T21:51:21Z log_level=info
+ts=2024-06-12T22:10:21.795960Z lvl=warn msg="nats-port argument is deprecated and unused" log_id=0pkcsctl000
+ts=2024-06-12T22:10:23.242515Z lvl=info msg="Resources opened" log_id=0pkcsctl000 service=bolt path=/var/lib/influxdb2/influxd.bolt
+ts=2024-06-12T22:10:23.243063Z lvl=info msg="Resources opened" log_id=0pkcsctl000 service=sqlite path=/var/lib/influxdb2/influxd.sqlite
+ts=2024-06-12T22:10:23.364148Z lvl=info msg="Bringing up metadata migrations" log_id=0pkcsctl000 service="KV migrations" migration_count=20
+ts=2024-06-12T22:10:24.898758Z lvl=info msg="Bringing up metadata migrations" log_id=0pkcsctl000 service="SQL migrations" migration_count=8
+ts=2024-06-12T22:10:25.079288Z lvl=info msg="Using data dir" log_id=0pkcsctl000 service=storage-engine service=store path=/var/lib/influxdb2/engine/data
+ts=2024-06-12T22:10:25.079814Z lvl=info msg="Compaction settings" log_id=0pkcsctl000 service=storage-engine service=store max_concurrent_compactions=1 throughput_bytes_per_second=50331648 th
+ts=2024-06-12T22:10:25.080105Z lvl=info msg="Open store (start)" log_id=0pkcsctl000 service=storage-engine service=store op_name=tsdb_open op_event=start
+ts=2024-06-12T22:10:25.080514Z lvl=info msg="Open store (end)" log_id=0pkcsctl000 service=storage-engine service=store op_name=tsdb_open op_event=end op_elapsed=0.413ms
+ts=2024-06-12T22:10:25.080742Z lvl=info msg="Starting retention policy enforcement service" log_id=0pkcsctl000 service=retention check_interval=30m
+ts=2024-06-12T22:10:25.081011Z lvl=info msg="Starting precreation service" log_id=0pkcsctl000 service=shard-precreation check_interval=10m advance_period=30m
+ts=2024-06-12T22:10:25.083756Z lvl=info msg="Starting query controller" log_id=0pkcsctl000 service=storage-reads concurrency_quota=1024 initial_memory_bytes_quota_per_query=92233720368547758
+ts=2024-06-12T22:10:25.096342Z lvl=info msg="Configuring InfluxQL statement executor (zeros indicate unlimited)." log_id=0pkcsctl000 max_select_point=0 max_select_series=0 max_select_buckets
+ts=2024-06-12T22:10:25.145837Z lvl=info msg=Starting log_id=0pkcsctl000 service=telemetry interval=8h
+ts=2024-06-12T22:10:25.150679Z lvl=info msg=Listening log_id=0pkcsctl000 service=tcp-listener transport=http addr=:8086 port=8086
 
-Как правильно и как исправить?
+```
+
+Как исправить ошибку? 
 
 ----
 
