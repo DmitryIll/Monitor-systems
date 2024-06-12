@@ -265,6 +265,28 @@ ts=2024-06-12T08:08:06.581Z lvl=error msg="encountered error" service=run err="c
 run: create server: failed to save cluster ID: open /var/lib/kapacitor/cluster.id: permission denied
 ```
 
+Еще попробовал вариант:
+Создал папку: /gitdata/
+
+В нее загрузил данные репозитория из git.
+далее на папку сделал полные права для всех:
+
+```
+ chmod 777 -R /gitdata
+```
+
+Что бы не было бы ограничений по правам.
+Только тут уже не добавлял Z для вольюмов.
+
+Но, не помогло все-равно те же ошибки:
+
+
+
+
+
+
+
+
 Как исправить?
 
 ----
